@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TemePDF</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header>
+    <h1>TemePDF</h1>
+  </header>
+  <main>
+    <label for="fileSelect">Select File to Download:</label>
+    <select id="fileSelect">
+      <!-- Options will be dynamically added here -->
+    </select>
+    <button id="exportButton">Export Downloaded File</button>
+    <div>
+      <input type="file" accept="application/pdf" id="fileInput">
+      <button id="uploadButton">Upload File</button>
+    </div>
+  </main>
+  <script>
+    // Function to fetch and update file list
+    async function updateFileList() {
+      try {
+        const response = await fetch('/api/files');
+        if (!response.ok) {
+          throw new Error('Failed to fetch file list');
+        }
+        const files = await response.json();
+
+        const fileSelect = document.getElementById('fileSelect');
+        // Clear existing options
+        fileSelect.innerHTML = '';
+
+        // Populate select dropdown with file names
+        files.forEach(file => {
+          const option = document.createElement('option');
+          option.value = file;
+          option.textContent = file;
+          fileSelect.appendChild(option);
+        });
+
+      } catch (error) {
+        console.error('Error fetching file list:', error);
+        alert('Failed to fetch file list');
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', updateFileList);
+
+    document.getElementById('exportButton').addEventListener('click', async function () {
+      const selectedFileName = document.getElementById('fileSelect').value;
+
+      if (!selectedFileName) {
+        alert('Please select a file to download');
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/download?filename=${encodeURIComponent(selectedFileName)}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/pdf'
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = selectedFileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      } catch (error) {
+        console.error('There was a problem with the export operation:', error);
+        alert('Failed to export file');
+      }
+    });
+
+    document.getElementById('uploadButton').addEventListener('click', async function () {
+      const fileInput = document.getElementById('fileInput');
+      const file = fileInput.files[0];
+
+      if (!file) {
+        alert('Please select a file first!');
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+
+        const result = await response.json();
+        alert('File uploaded successfully');
+
+        // Update file list after successful upload
+        updateFileList();
+
+      } catch (error) {
+        console.error('There was a problem with the upload operation:', error);
+        alert('File upload failed');
+      }
+    });
+  </script>
+</body>
+
+</html>
