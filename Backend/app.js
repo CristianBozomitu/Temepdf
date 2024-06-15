@@ -5,11 +5,6 @@ const multer = require('multer');
 const fs = require('fs');
 
 const app = express();
-app.use(cors({
-    origin: 'https://courageous-souffle-e8533d.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
 // Middleware to parse JSON bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
